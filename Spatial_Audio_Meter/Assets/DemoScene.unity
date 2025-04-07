@@ -302,8 +302,8 @@ Camera:
   m_GameObject: {fileID: 825700313}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.90099996, g: 0.90099996, b: 0.90099996, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -639,8 +639,8 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 9116efa94aaf48f4da7a6eae6dbab828, type: 3}
-  m_Resource: {fileID: 8300000, guid: 9116efa94aaf48f4da7a6eae6dbab828, type: 3}
+  m_audioClip: {fileID: 8300000, guid: ffe86d7a6f339bd48b26a7eccfdeb18b, type: 3}
+  m_Resource: {fileID: 8300000, guid: ffe86d7a6f339bd48b26a7eccfdeb18b, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -738,8 +738,85 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44755ac78ff5541488a1093baca3211b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  visualizationObject: {fileID: 8036613590850764287, guid: 68983dee4c807054a8b0065b08c7c723, type: 3}
   vfx: {fileID: 1543741078}
+  perceptualLoudnessCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 1.3
+      value: 0.5
+      inSlope: 0.046482336
+      outSlope: 0.046482336
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1.698
+      value: 0.5185
+      inSlope: 0.21668842
+      outSlope: 0.21668842
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 2.4
+      value: 0.7901
+      inSlope: 0.30661395
+      outSlope: 0.30661395
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 3
+      value: 0.9259
+      inSlope: 0.17491671
+      outSlope: 0.17491671
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 3.6
+      value: 1
+      inSlope: -0.14815
+      outSlope: -0.14815
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 4.1
+      value: 0.7901
+      inSlope: -0.30039993
+      outSlope: -0.30039993
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 4.2
+      value: 0.772
+      inSlope: -0.45049867
+      outSlope: -0.45049867
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 4.3
+      value: 0.7
+      inSlope: -0.7199975
+      outSlope: -0.7199975
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!4 &1096211605
 Transform:
   m_ObjectHideFlags: 0
@@ -818,7 +895,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0cc8f81df765cc249b4eb8b777279c4f, type: 2}
+  - {fileID: 2100000, guid: 8c0d1279d5d285144b6d473451b387bb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

@@ -4,30 +4,97 @@ using UnityEngine;
 using Exocortex.DSP; // Custom DSP library for FFT
 using System.Collections;
 using UnityEngine.VFX;
+using System.Net;
 
 public class UnityPointilismVisualize : MonoBehaviour {
-    public GameObject visualizationObject; // prefab to visualize the points
     public VisualEffect vfx; // assign in inspector
     AudioSource audioSource;
     AudioData data; // stores the audio data for the entire processed clip
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    GraphicsBuffer buffer; // buffer for the sound points
+    GraphicsBuffer mainBuffer; // buffer for the sound points
+    GraphicsBuffer freqBuffer;
+
+    // Loudness curve
+    public AnimationCurve perceptualLoudnessCurve;
+
     void Start() {
-        // StartCoroutine(TestAudioVisualization());
         data = GetSoundPoints();
         Debug.Log($"Sound Frames length: {data.soundFrames.Length}");
         Debug.Log($"Sample Rate: {data.sampleRate}");
         Debug.Log($"Frequency: {audioSource.clip.frequency}");
 
-        buffer = new GraphicsBuffer(
+        mainBuffer = new GraphicsBuffer(
             GraphicsBuffer.Target.Structured,
             data.soundFrames[0].soundPoints.Length,
             sizeof(float) * 4);
+
+        freqBuffer = new GraphicsBuffer(
+            GraphicsBuffer.Target.Raw,
+            data.soundFrames[0].soundPoints.Length,
+            sizeof(float) * 1);
     }
 
     // Update is called once per frame
     void Update() {
         VisualizeUsingVFX();
+        // TestDirectionalSignals();
+    }
+
+    public void TestDirectionalSignals()
+    {
+        // Create a test frame with two points
+        SoundFrame testFrame = new SoundFrame
+        {
+            soundPoints = new SoundPoint[2]
+        };
+
+        testFrame.soundPoints[0] = new SoundPoint(
+            energy: 100.0f,
+            x: 1.0f,
+            y: 0.0f,
+            z: 0.0f,
+            frequency: 440f
+        );
+
+        testFrame.soundPoints[1] = new SoundPoint(
+            energy: 100.0f,
+            x: 0.0f,
+            y: 0.0f,
+            z: 1.0f,
+            frequency: 440f
+        );
+
+        testFrame.soundPoints[2] = new SoundPoint(
+            energy: 100.0f,
+            x: 0.0f,
+            y: 1.0f,
+            z: 0.0f,
+            frequency: 440f
+        );
+
+        // Create test arrays for VFX Graph
+        Vector4[] points = new Vector4[2];
+        float[] freq = new float[2];
+
+        // Convert test points to VFX format
+        for (int i = 0; i < 2; i++)
+        {
+            SoundPoint point = testFrame.soundPoints[i];
+            points[i] = new Vector4(point.x, point.y, point.z, point.energy);
+            freq[i] = point.frequency;
+        }
+
+        // Send to VFX Graph
+        mainBuffer.SetData(points);
+        freqBuffer.SetData(freq);
+        vfx.SetGraphicsBuffer("PointBuffer", mainBuffer);
+        vfx.SetGraphicsBuffer("FrequencyBuffer", freqBuffer);
+        vfx.SetInt("PointBufferLength", points.Length);
+        vfx.SendEvent("BufferUpdated");
+
+        // Draw debug lines in Scene view to verify
+        Debug.DrawRay(Vector3.zero, new Vector3(0, 1, 0) * 5f, Color.blue, 5f);  // Front
+        Debug.DrawRay(Vector3.zero, new Vector3(1, 0, 0) * 5f, Color.red, 5f);   // Right
     }
 
     public void VisualizeUsingVFX() {
@@ -38,20 +105,32 @@ public class UnityPointilismVisualize : MonoBehaviour {
         if (audioSource.isPlaying) {
             float time = audioSource.time;
             SoundFrame frame = GetSoundFrameForTime(time);
-
             Vector4[] points = new Vector4[frame.soundPoints.Length];
+            float[] frequency = new float[frame.soundPoints.Length];
             for (int i = 0; i < frame.soundPoints.Length; i++) {
                 SoundPoint point = frame.soundPoints[i];
-                if (point.energy < 0.01f) {
-                    continue; // skip low energy points
+
+                // energy
+                float safeFreq = Mathf.Clamp(point.frequency, 50f, 20000f);
+                float logFreq = Mathf.Log10(safeFreq);
+                float perceptualMultiplier = perceptualLoudnessCurve.Evaluate(logFreq);
+                // point.energy has already been clamped between 0.01f and 100f elsewhere
+                float adjustedEnergy = point.energy * perceptualMultiplier;
+
+                if (adjustedEnergy > 75f) {
+                    Debug.LogWarning("Time " + Time.deltaTime + "Energy: " + adjustedEnergy + " Frequency: " + point.frequency);
                 }
-                points[i] = new Vector4(point.x, point.y, point.z, point.energy);
+
+                points[i] = new Vector4(point.x, point.y, point.z, adjustedEnergy);
+                frequency[i] = point.frequency;
             }
 
             // process points
-            buffer.SetData(points);
+            mainBuffer.SetData(points);
+            freqBuffer.SetData(frequency);
 
-            vfx.SetGraphicsBuffer("PointBuffer", buffer);
+            vfx.SetGraphicsBuffer("PointBuffer", mainBuffer);
+            vfx.SetGraphicsBuffer("FrequencyBuffer", freqBuffer);
             vfx.SetInt("PointBufferLength", points.Length);
             vfx.SendEvent("BufferUpdated");
         }
@@ -90,34 +169,45 @@ public class UnityPointilismVisualize : MonoBehaviour {
     }
 
     public struct SoundPoint {
-        // data structure for a single point in space (w, x, y, z)
+        // data structure for a single point in space (w, x, y, z, f)
         public float energy;
         public float x;
         public float y;
         public float z;
+        public float frequency;
 
-        public SoundPoint(float energy, float x, float y, float z) {
+        public SoundPoint(float energy, float x, float y, float z, float frequency) {
             this.energy = energy;
             this.x = x;
             this.y = y;
             this.z = z;
+            this.frequency = frequency;
         }
     }
 
     public SoundFrame GetSoundFrameForTime(float t) {
+        // Validate data exists
+        if (data.soundFrames == null || data.soundFrames.Length == 0) {
+            Debug.LogWarning("No sound frames available");
+            return new SoundFrame { soundPoints = new SoundPoint[0] };
+        }
+
         int sampleRate = data.sampleRate;
         int hopSize = data.hopSize;
         int numFrames = data.numFrames;
         int frameIndex = Mathf.FloorToInt(t * sampleRate / hopSize);
+
         if (frameIndex < 0 || frameIndex >= numFrames) {
-            Debug.LogError("Frame index out of bounds: " + frameIndex);
-            return default;
+            Debug.LogWarning("Frame index out of bounds: " + frameIndex);
+            return new SoundFrame { soundPoints = new SoundPoint[0] };
         }
         SoundFrame frame = data.soundFrames[frameIndex];
         if (frame.soundPoints == null || frame.soundPoints.Length == 0) {
-            Debug.LogError("No sound points found for frame index: " + frameIndex);
-            return default;
+            Debug.LogWarning($"No sound points found for frame index: {frameIndex}");
+            return new SoundFrame { soundPoints = new SoundPoint[0] };
         }
+
+
         return frame;
     }
 
@@ -141,15 +231,17 @@ public class UnityPointilismVisualize : MonoBehaviour {
 
         int channelCount = audioSource.clip.channels;
         int sampleCount = audioSource.clip.samples;
+        int samplingRate = audioSource.clip.frequency;
         float[] wChannel = new float[sampleCount];
         float[] xChannel = new float[sampleCount];
         float[] yChannel = new float[sampleCount];
         float[] zChannel = new float[sampleCount];
+
         for (int i = 0; i < sampleCount; i++) {
             wChannel[i] = rawAudioData[i * channelCount];
-            xChannel[i] = rawAudioData[i * channelCount + 1];
-            yChannel[i] = rawAudioData[i * channelCount + 2];
-            zChannel[i] = rawAudioData[i * channelCount + 3];
+            xChannel[i] = rawAudioData[i * channelCount + 3];
+            yChannel[i] = rawAudioData[i * channelCount + 1];
+            zChannel[i] = rawAudioData[i * channelCount + 2];
         }
 
         // normalize data if needed
@@ -224,15 +316,18 @@ public class UnityPointilismVisualize : MonoBehaviour {
             for (int bin = 1; bin < frameSize / 2 - 1; bin++) { // skip dc and nyquist
                 // get magnitude of W channel
                 float energy = Mathf.Abs(wFrame[bin]);
+                float frequency = bin * (samplingRate / frameSize);
 
-                // skip bins with low energy
+                // clamp energy between 0.01f and 100.0f
                 if (energy < 0.01f) {
-                    continue;
+                    energy = 0.01f;
+                } else if (energy > 100.0f) {
+                    energy = 100.0f;
                 }
 
-                // skip if W is too close to zero
+                // set W very small if W is too close to zero
                 if (Mathf.Abs(wFrame[bin]) < 0.000001f) {
-                    continue;
+                    wFrame[bin] = 0.000001f;
                 }
 
                 // calculate direction vector using real parts for simplicity
@@ -242,12 +337,13 @@ public class UnityPointilismVisualize : MonoBehaviour {
 
                 // check for NaN values
                 if (float.IsNaN(xDir) || float.IsNaN(yDir) || float.IsNaN(zDir)) {
+                    Debug.Log($"NaN detected at bin {bin}: xDir={xDir}, yDir={yDir}, zDir={zDir}");
                     continue;
                 }
 
                 // normalize the vector
                 float length = Mathf.Sqrt(xDir * xDir + yDir * yDir + zDir * zDir);
-                if (length < 0.000001f) { // avoid divide by zero
+                if (length < 0.000001f) { // avoid divide by zero (this is hit a lot)
                     continue;
                 }
 
@@ -256,7 +352,14 @@ public class UnityPointilismVisualize : MonoBehaviour {
                 zDir /= length;
 
                 // store the point in the array
-                soundFrame.soundPoints[bin] = new SoundPoint(energy, xDir, yDir, zDir); // store the energy as w component
+                // mapping coordinates to Unity's system, we get
+                soundFrame.soundPoints[bin] = new SoundPoint(
+                    energy,
+                    yDir,
+                    zDir,
+                    xDir,
+                    frequency
+                );
             }
 
             // add the frame to the data array
@@ -266,6 +369,14 @@ public class UnityPointilismVisualize : MonoBehaviour {
     }
 
     void OnDestroy() {
-        buffer.Release();
+        // clean up graphics buffers
+        if (mainBuffer != null) {
+            mainBuffer.Dispose();
+            mainBuffer = null;
+        }
+        if (freqBuffer != null) {
+            freqBuffer.Dispose();
+            freqBuffer = null;
+        }
     }
 }
