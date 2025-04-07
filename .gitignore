@@ -9,7 +9,9 @@
 /[Bb]uild/
 /[Bb]uilds/
 /[Ll]ogs/
-/[Uu]ser[Ss]ettings/
+
+# Customized to work with all user settings
+**/[Uu]ser[Ss]ettings/
 
 Library/
 Temp/
@@ -18,9 +20,6 @@ obj/
 *.dll
 *.dylib
 *.so
-
-# CUSTOM
-*.log
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
