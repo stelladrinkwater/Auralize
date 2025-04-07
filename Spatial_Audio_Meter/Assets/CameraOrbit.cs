@@ -7,19 +7,25 @@ using UnityEngine;
 
 namespace TDLN.CameraControllers
 {
-    public class CameraOrbit : MonoBehaviour
-    {
+    public class CameraOrbit : MonoBehaviour {
         public GameObject target;
+        public GameObject head;
         public float distance = 10.0f;
 
         public float xSpeed = 250.0f;
         public float ySpeed = 120.0f;
+
+        public float randomSpeed = 0.01f;
+        public float randomPhase = 0;
+        public float circleRadius = 0.1f;
 
         public float yMinLimit = -20;
         public float yMaxLimit = 80;
 
         float x = 0.0f;
         float y = 0.0f;
+
+        private bool isMouseLocked = false;
 
         void Start()
         {
@@ -34,7 +40,13 @@ namespace TDLN.CameraControllers
         {
             if (distance < 0.2f) distance = 0.2f;
             distance -= Input.GetAxis("Mouse ScrollWheel") * 2;
-            if (target && (Input.GetMouseButton(0) || Input.GetMouseButton(1)))
+
+            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+            {
+                isMouseLocked = !isMouseLocked;
+            }
+
+            if (isMouseLocked)
             {
                 var pos = Input.mousePosition;
                 var dpiScale = 1f;
@@ -56,13 +68,14 @@ namespace TDLN.CameraControllers
                 var position = rotation * new Vector3(0.0f, 0.0f, -distance) + target.transform.position;
                 transform.rotation = rotation;
                 transform.position = position;
-
             }
             else
             {
                 // comment out these two lines if you don't want to hide mouse curser or you have a UI button
-                Cursor.visible = true;
-                Cursor.lockState = CursorLockMode.None;
+                // Cursor.visible = true;
+                // Cursor.lockState = CursorLockMode.None;
+
+                UpdateRandomMovement();
             }
 
             if (Math.Abs(prevDistance - distance) > 0.001f)
@@ -75,13 +88,42 @@ namespace TDLN.CameraControllers
             }
         }
 
-        static float ClampAngle(float angle, float min, float max)
+        private void UpdateRandomMovement()
         {
-            if (angle < -360)
-                angle += 360;
-            if (angle > 360)
-                angle -= 360;
+            randomPhase += randomSpeed * Time.deltaTime;
+            float randomX = Mathf.Sin(randomPhase) * circleRadius;
+            float randomY = Mathf.Cos(randomPhase) * circleRadius;
+
+            x += randomX * 0.01f;
+            y += randomY * 0.01f;
+            y = ClampAngle(y, yMinLimit, yMaxLimit);
+            var rotation = Quaternion.Euler(y, x, 0);
+            var position = rotation * new Vector3(0.0f, 0.0f, -distance) + target.transform.position;
+            transform.rotation = rotation;
+            transform.position = position;
+        }
+
+        float ClampAngle(float angle, float min, float max)
+        {
+            if (angle < -360f) angle += 360f;
+            if (angle > 360f) angle -= 360f;
             return Mathf.Clamp(angle, min, max);
+        }
+
+        // Simple script to update the head position with a bit of damping
+        void UpdateHeadPosition()
+        {
+            if (head == null) return;
+            var headRot = head.transform.rotation;
+            var cameraRot = transform.rotation;
+
+            var rot = Quaternion.Slerp(headRot, cameraRot, Time.deltaTime * 10f);
+
+            head.transform.rotation = rot;
+        }
+        void Update()
+        {
+            UpdateHeadPosition();
         }
     }
 }
