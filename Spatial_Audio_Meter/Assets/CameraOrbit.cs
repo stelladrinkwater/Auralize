@@ -5,8 +5,7 @@
 using System;
 using UnityEngine;
 
-namespace TDLN.CameraControllers
-{
+namespace TDLN.CameraControllers {
     public class CameraOrbit : MonoBehaviour {
         public GameObject target;
         public GameObject head;
@@ -25,10 +24,9 @@ namespace TDLN.CameraControllers
         float x = 0.0f;
         float y = 0.0f;
 
-        private bool isMouseLocked = false;
+        private bool isMousePressed = false;
 
-        void Start()
-        {
+        void Start() {
             var angles = transform.eulerAngles;
             x = angles.y;
             y = angles.x;
@@ -36,18 +34,18 @@ namespace TDLN.CameraControllers
 
         float prevDistance;
 
-        void LateUpdate()
-        {
+        void LateUpdate() {
             if (distance < 0.2f) distance = 0.2f;
             distance -= Input.GetAxis("Mouse ScrollWheel") * 2;
 
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
-            {
-                isMouseLocked = !isMouseLocked;
+            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1)) {
+                isMousePressed = true;
+            }
+            if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1)) {
+                isMousePressed = false;
             }
 
-            if (isMouseLocked)
-            {
+            if (isMousePressed) {
                 var pos = Input.mousePosition;
                 var dpiScale = 1f;
                 if (Screen.dpi < 1) dpiScale = 1;
@@ -55,10 +53,6 @@ namespace TDLN.CameraControllers
                 else dpiScale = Screen.dpi / 200f;
 
                 if (pos.x < 380 * dpiScale && Screen.height - pos.y < 250 * dpiScale) return;
-
-                // comment out these two lines if you don't want to hide mouse curser or you have a UI button
-                Cursor.visible = false;
-                Cursor.lockState = CursorLockMode.Locked;
 
                 x += Input.GetAxis("Mouse X") * xSpeed * 0.02f;
                 y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
@@ -69,17 +63,11 @@ namespace TDLN.CameraControllers
                 transform.rotation = rotation;
                 transform.position = position;
             }
-            else
-            {
-                // comment out these two lines if you don't want to hide mouse curser or you have a UI button
-                // Cursor.visible = true;
-                // Cursor.lockState = CursorLockMode.None;
-
+            else {
                 UpdateRandomMovement();
             }
 
-            if (Math.Abs(prevDistance - distance) > 0.001f)
-            {
+            if (Math.Abs(prevDistance - distance) > 0.001f) {
                 prevDistance = distance;
                 var rot = Quaternion.Euler(y, x, 0);
                 var po = rot * new Vector3(0.0f, 0.0f, -distance) + target.transform.position;
@@ -88,8 +76,7 @@ namespace TDLN.CameraControllers
             }
         }
 
-        private void UpdateRandomMovement()
-        {
+        private void UpdateRandomMovement() {
             randomPhase += randomSpeed * Time.deltaTime;
             float randomX = Mathf.Sin(randomPhase) * circleRadius;
             float randomY = Mathf.Cos(randomPhase) * circleRadius;
@@ -103,26 +90,23 @@ namespace TDLN.CameraControllers
             transform.position = position;
         }
 
-        float ClampAngle(float angle, float min, float max)
-        {
+        float ClampAngle(float angle, float min, float max) {
             if (angle < -360f) angle += 360f;
             if (angle > 360f) angle -= 360f;
             return Mathf.Clamp(angle, min, max);
         }
 
         // Simple script to update the head position with a bit of damping
-        void UpdateHeadPosition()
-        {
+        void UpdateHeadPosition() {
             if (head == null) return;
             var headRot = head.transform.rotation;
             var cameraRot = transform.rotation;
 
-            var rot = Quaternion.Slerp(headRot, cameraRot, Time.deltaTime * 10f);
+            var rot = Quaternion.Slerp(headRot, cameraRot, Time.deltaTime * 7.5f);
 
             head.transform.rotation = rot;
         }
-        void Update()
-        {
+        void Update() {
             UpdateHeadPosition();
         }
     }

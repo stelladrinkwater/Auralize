@@ -1,0 +1,25 @@
+VisualElement > #SelectAudioDropdown > .unity-popup-field__label {
+    opacity: 1;
+    min-width: 125px;
+    max-width: 40%;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    width: 45%;
+}
+
+VisualElement > #SelectAudioDropdown > .unity-popup-field__input {
+    background-color: rgb(242, 242, 242);
+}
+
+VisualElement > #AudioProgressSlider > .unity-slider__label {
+}
+
+.custom-button {
+    background-color: #6FF173;
+    transition: background-color 0.1s ease-in-out;
+}
+
+.custom-button:active {
+    background-color: #51B054;
+}

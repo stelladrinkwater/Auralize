@@ -37,64 +37,6 @@ public class UnityPointilismVisualize : MonoBehaviour {
     // Update is called once per frame
     void Update() {
         VisualizeUsingVFX();
-        // TestDirectionalSignals();
-    }
-
-    public void TestDirectionalSignals()
-    {
-        // Create a test frame with two points
-        SoundFrame testFrame = new SoundFrame
-        {
-            soundPoints = new SoundPoint[2]
-        };
-
-        testFrame.soundPoints[0] = new SoundPoint(
-            energy: 100.0f,
-            x: 1.0f,
-            y: 0.0f,
-            z: 0.0f,
-            frequency: 440f
-        );
-
-        testFrame.soundPoints[1] = new SoundPoint(
-            energy: 100.0f,
-            x: 0.0f,
-            y: 0.0f,
-            z: 1.0f,
-            frequency: 440f
-        );
-
-        testFrame.soundPoints[2] = new SoundPoint(
-            energy: 100.0f,
-            x: 0.0f,
-            y: 1.0f,
-            z: 0.0f,
-            frequency: 440f
-        );
-
-        // Create test arrays for VFX Graph
-        Vector4[] points = new Vector4[2];
-        float[] freq = new float[2];
-
-        // Convert test points to VFX format
-        for (int i = 0; i < 2; i++)
-        {
-            SoundPoint point = testFrame.soundPoints[i];
-            points[i] = new Vector4(point.x, point.y, point.z, point.energy);
-            freq[i] = point.frequency;
-        }
-
-        // Send to VFX Graph
-        mainBuffer.SetData(points);
-        freqBuffer.SetData(freq);
-        vfx.SetGraphicsBuffer("PointBuffer", mainBuffer);
-        vfx.SetGraphicsBuffer("FrequencyBuffer", freqBuffer);
-        vfx.SetInt("PointBufferLength", points.Length);
-        vfx.SendEvent("BufferUpdated");
-
-        // Draw debug lines in Scene view to verify
-        Debug.DrawRay(Vector3.zero, new Vector3(0, 1, 0) * 5f, Color.blue, 5f);  // Front
-        Debug.DrawRay(Vector3.zero, new Vector3(1, 0, 0) * 5f, Color.red, 5f);   // Right
     }
 
     public void VisualizeUsingVFX() {
@@ -378,5 +320,23 @@ public class UnityPointilismVisualize : MonoBehaviour {
             freqBuffer.Dispose();
             freqBuffer = null;
         }
+    }
+
+    public void UpdateAudioClip(AudioClip newClip) {
+        audioSource.clip = newClip;
+        data = GetSoundPoints();
+        Debug.Log($"Sound Frames length: {data.soundFrames.Length}");
+        Debug.Log($"Sample Rate: {data.sampleRate}");
+        Debug.Log($"Frequency: {audioSource.clip.frequency}");
+
+        mainBuffer = new GraphicsBuffer(
+            GraphicsBuffer.Target.Structured,
+            data.soundFrames[0].soundPoints.Length,
+            sizeof(float) * 4);
+
+        freqBuffer = new GraphicsBuffer(
+            GraphicsBuffer.Target.Raw,
+            data.soundFrames[0].soundPoints.Length,
+            sizeof(float) * 1);
     }
 }
