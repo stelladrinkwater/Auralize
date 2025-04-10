@@ -83,5 +83,9 @@ public class UIManager : MonoBehaviour {
         string selectedTrackName = evt.newValue;
         AudioClip newClip = audioList.Find(t => t.name == selectedTrackName);
         audioController.UpdateAudioClip(newClip);
+
+        // Set slider to value of currently playing audio.
+        audioSlider.lowValue = 0;
+        audioSlider.highValue = Mathf.CeilToInt(audioController.GetAudioLength());
     }
 }
