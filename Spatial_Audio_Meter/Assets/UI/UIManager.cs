@@ -12,6 +12,7 @@ public class UIManager : MonoBehaviour {
 
     Slider audioSlider;
     private Button playButton;
+    private Button exitButton;
     private DropdownField audioDropdown;
     private bool isDragging = false;
 
@@ -20,6 +21,7 @@ public class UIManager : MonoBehaviour {
         audioSlider = root.Q<Slider>("AudioProgressSlider");
         playButton = root.Q<Button>("PlayButton");
         audioDropdown = root.Q<DropdownField>("SelectAudioDropdown");
+        exitButton = root.Q<Button>("ExitButton");
 
         // Set slider to value of currently playing audio.
         audioSlider.lowValue = 0;
@@ -35,6 +37,7 @@ public class UIManager : MonoBehaviour {
         root.RegisterCallback<MouseUpEvent>(OnSliderPointerUp, useTrickleDown: TrickleDown.TrickleDown);
 
         playButton.clicked += OnPlayButtonClick;
+        exitButton.clicked += Quit;
 
         if (audioList.Count > 0) {
             List<string> audioNames = audioList.Select(a => a.name).ToList();
@@ -87,5 +90,9 @@ public class UIManager : MonoBehaviour {
         // Set slider to value of currently playing audio.
         audioSlider.lowValue = 0;
         audioSlider.highValue = Mathf.CeilToInt(audioController.GetAudioLength());
+    }
+
+    void Quit() {
+        Application.Quit();
     }
 }
