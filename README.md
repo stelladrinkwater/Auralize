@@ -1,5 +1,7 @@
 # Auralize
 
+## Auralize is a spatial audio visualizer.
+
 First press play on the Unity project, then run:
 
 ```
