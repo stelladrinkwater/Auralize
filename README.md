@@ -14,6 +14,6 @@ https://github.com/user-attachments/assets/5ce57087-093c-4971-913f-a55ff83e6d4e
 
 
 
-[video demo](https://youtu.be/hgynDjsTxIY)
+[Video demo here.](https://youtu.be/hgynDjsTxIY)
 
-test file is an [eight direction ambisonic wav found here.](https://www.ambisonia.com/Members/ajh/ambisonicfile.2007-05-29.7251031563/ )
+The test audio file is an [eight direction ambisonic wav found here.](https://www.ambisonia.com/Members/ajh/ambisonicfile.2007-05-29.7251031563/ )
